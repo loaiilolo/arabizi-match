@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>arabizi-match demo</title>
+<style>
+body{font-family:system-ui,Tahoma,sans-serif;max-width:620px;margin:16px auto;padding:0 12px;background:#f6f7f9;color:#1c2330}
+input{width:100%;font:inherit;padding:10px;border:1px solid #cdd3dc;border-radius:6px;direction:ltr;text-align:left}
+li{background:#fff;border:1px solid #dde2ea;border-radius:6px;padding:8px 10px;margin:6px 0;display:flex;justify-content:space-between}
+ul{list-style:none;padding:0} .s{color:#2b6cb0;direction:ltr;font-variant-numeric:tabular-nums}
+small{color:#5b6677} code{direction:ltr;unicode-bidi:embed}
+</style></head><body>
+<h2>arabizi-match demo</h2>
+<input id="q" placeholder="اكتب بالفرانكو أو بالعربي: shanta zahr / gazma / 3asal eswed" autofocus>
+<p><small>skeleton: <code id="sk"></code></small></p>
+<ul id="out"></ul>
+<script type="module">
+import { createIndex, toSkeleton } from "../src/index.js";
+const products = ["شنطة جلد نسائي","شنطة ظهر مدرسية","جزمة رياضية رجالي","جزمة حريمي كعب","فستان سهرة اسود","فستان قطن صيفي","تليفون سامسونج جالاكسي","شاحن تليفون ايفون","عسل نحل طبيعي","عسل اسود","ساعة يد رجالي","ساعة حائط","تيشيرت قطن 42","بنطلون جينز 42","كوتشي نايك","سماعة بلوتوث"];
+const idx = createIndex(products);
+const q = document.getElementById("q"), out = document.getElementById("out"), sk = document.getElementById("sk");
+function run() {
+  sk.textContent = toSkeleton(q.value) || "-";
+  const r = idx.search(q.value, { limit: 5 });
+  out.innerHTML = "";
+  if (q.value.trim() && !r.length) out.innerHTML = "<li>لا توجد نتائج</li>";
+  for (const x of r) { const li = document.createElement("li"); li.innerHTML = "<span></span><span class=s></span>"; li.children[0].textContent = x.item; li.children[1].textContent = x.score; out.appendChild(li); }
+}
+q.addEventListener("input", run);
+q.value = new URLSearchParams(location.search).get("q") || ""; run();
+</script></body></html>
