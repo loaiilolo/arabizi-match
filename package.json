@@ -1,6 +1,6 @@
 {
   "name": "arabizi-match",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Match Egyptian Franco-Arabic (Arabizi) and Arabic spelling variants in product and name search. Zero dependencies.",
   "type": "module",
   "main": "./src/index.js",
