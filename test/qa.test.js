@@ -69,3 +69,48 @@ test("documented collisions and misses (limits, not bugs)", () => {
   assert.equal(toSkeleton("kitab"), toSkeleton("كاتب")); // vowels dropped
   assert.deepEqual(search("sa3a heta2t", P), []); // h for ح is not guessed
 });
+
+test("toSkeleton reads $ as sh only when attached to a letter", () => {
+  assert.equal(toSkeleton("$ukran"), toSkeleton("shukran"));
+  assert.equal(toSkeleton("$50"), "50");
+  assert.equal(toSkeleton("50$"), "50");
+});
+
+test("toSkeleton handles digit+apostrophe letters", () => {
+  assert.equal(toSkeleton("sha3'al"), toSkeleton("شغل"));
+  assert.equal(toSkeleton("7'e$ako"), toSkeleton("خيشاكو"));
+  assert.equal(toSkeleton("ma6'loom"), toSkeleton("مظلوم"));
+  assert.equal(toSkeleton("9'a3f"), toSkeleton("ضعف"));
+});
+
+test("toSkeleton keeps digit+apostrophe literal when no letter is attached", () => {
+  assert.equal(toSkeleton("5' 9'"), "5 9");
+});
+
+test("toSkeleton maps Latin 9 to ص and drops stray apostrophes inside words", () => {
+  assert.equal(toSkeleton("9aba7"), toSkeleton("صباح"));
+  assert.equal(toSkeleton("ma'loom"), toSkeleton("maloom"));
+});
+
+test("pure numbers (sizes, years, model numbers) are kept literal", () => {
+  assert.equal(toSkeleton("39"), "39");
+  assert.equal(toSkeleton("size 42"), toSkeleton("sz") + " 42");
+  assert.equal(toSkeleton("2024"), "2024");
+  assert.equal(toSkeleton("١٢٣"), "123");
+  assert.equal(toSkeleton("iphone 13"), toSkeleton("iphone") + " 13");
+});
+
+test("search rejects other sizes at the default threshold", () => {
+  const items = ["مقاس 39", "مقاس 42", "مقاس 93", "مقاس 38"];
+  assert.deepEqual(search("مقاس 39", items).map((x) => x.item), ["مقاس 39"]);
+  assert.deepEqual(search("size 39", ["size 39", "size 38", "size 93"]).map((x) => x.item), ["size 39"]);
+});
+
+test("pure numbers match exactly at defaults: 39 does not match 395", () => {
+  assert.deepEqual(search("size 39", ["size 395", "size 39"]).map((x) => x.item), ["size 39"]);
+  assert.deepEqual(search("39", ["395", "39", "3"]).map((x) => x.item), ["39"]);
+});
+
+test("text prefix matching for the last word still works", () => {
+  assert.deepEqual(search("shan", ["شنطة جلد"], { threshold: 0.7 }).map((x) => x.item), ["شنطة جلد"]);
+});
