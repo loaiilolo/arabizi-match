@@ -29,7 +29,7 @@ similarity("fostan", "فستان"); // 1
 normalizeArabic("مَدْرَسَـة"); // "مدرسه"
 ```
 
-`search(query, items, { key, threshold = 0.7, limit = 10 })`. The last query word also matches
+`search(query, items, { key, threshold = 0.7, limit = 10 })`. The last query word (not a number) also matches
 as a prefix, for search-as-you-type. For repeated searches over a large list, build the index once:
 
 ```js
@@ -46,7 +46,8 @@ Try `demo/index.html` through any static server (`python3 -m http.server`, open 
    and Persian digits.
 2. Skeleton: map letters to consonant classes (for example ص/س/ث to `s`, ط/ت to `t`,
    `3` and ع to `3`, `7` and ح to `7`, `5`/kh and خ to `x`), drop vowel letters, drop a final
-   ه/h. Latin digraphs sh, kh, gh, th, dh are handled.
+   ه/h. Latin digraphs sh, kh, gh, th, dh are handled, plus `$` for sh and `3'`, `7'`, `9'`, `6'`
+   for غ, خ, ض, ظ. A number on its own (size, year, model number) is kept as written and only matches the same number exactly, with no prefix matching.
 3. Compare words by edit distance. Dropping `q` costs half, since Egyptians write `2` for both
    hamza and qaf.
 
@@ -65,6 +66,7 @@ Try `demo/index.html` through any static server (`python3 -m http.server`, open 
 - Vowels are dropped, so different words can collide (`kitab` and `كاتب`).
 - `w` and `y` are treated as vowels, so words that depend on them as consonants match loosely.
 - Only Egyptian-style conventions are tuned. Gulf and Levantine Franco is not tested.
+- Words that mix letters and digits (`s23`, `2x`) are read as Franco-Arabic, so model codes can match loosely.
 - Matching is word by word with no stemming or morphology.
 - `h` is not guessed as ح (people write `7`), so "heta2t" does not match "حائط".
 - Items sharing one query word can score around 0.75 even when other words differ; tune `threshold`.
