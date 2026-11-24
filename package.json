@@ -1,0 +1,14 @@
+{
+  "name": "arabizi-match",
+  "version": "0.1.0",
+  "description": "Match Egyptian Franco-Arabic (Arabizi) and Arabic spelling variants in product and name search. Zero dependencies.",
+  "type": "module",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "exports": { ".": { "types": "./src/index.d.ts", "import": "./src/index.js" } },
+  "files": ["src", "README.md", "LICENSE"],
+  "scripts": { "test": "node --test test/*.test.js" },
+  "keywords": ["arabic", "arabizi", "franco-arabic", "egyptian", "search", "fuzzy", "e-commerce", "normalization"],
+  "license": "MIT",
+  "engines": { "node": ">=18" }
+}
