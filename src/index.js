@@ -40,7 +40,8 @@ const LAT_DIGRAPH = { sh: "S", kh: "x", gh: "G", th: "s", dh: "z", ch: "S", ph: 
 const LAT = {
   b: "b", t: "t", s: "s", g: "g", j: "g", d: "d", z: "z", r: "r", f: "f", q: "q",
   k: "k", l: "l", m: "m", n: "n", h: "h", p: "b", v: "f", c: "k", x: "x",
-  7: "7", 3: "3", 5: "x", 8: "q", 9: "q", 2: "q", 6: "t", 4: "d",
+  7: "7", 3: "3", 5: "x", 8: "q", 9: "s", 2: "q", 6: "t", 4: "d",
+  "\u1E0D": "d", "\u1E93": "z", // placeholders for 9' and 6' (see prepareLatin)
 };
 const LAT_DROP = new Set(["a", "e", "i", "o", "u", "y", "w"]);
 
@@ -49,11 +50,29 @@ const LAT_DROP = new Set(["a", "e", "i", "o", "u", "y", "w"]);
  * A word-final ة/ه/h is dropped so "shanta" matches "شنطة".
  */
 export function toSkeleton(input) {
-  const words = normalizeArabic(input).split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+  const words = prepareLatin(normalizeArabic(input)).split(/[^\p{L}\p{N}]+/u).filter(Boolean);
   return words.map(wordSkeleton).filter(Boolean).join(" ");
 }
 
+// Common chat spellings: "$" = sh, and a digit followed by an apostrophe is
+// the dotted variant of that letter (3' = غ, 7' = خ, 9' = ض, 6' = ظ).
+// Any other apostrophe is dropped so it does not split a word.
+function prepareLatin(s) {
+  const AP = "['\u2032\u2019`]";
+  // Only rewrite when attached to a letter, so "$50", "5'" (feet) and "9'" alone stay literal.
+  const near = (core) => new RegExp("(?<=\\p{L})" + core + "|" + core + "(?=\\p{L})", "gu");
+  return s
+    .replace(near("\\$"), "sh")
+    .replace(near("3" + AP), "gh")
+    .replace(near("[75]" + AP), "kh")
+    .replace(near("9" + AP), "\u1E0D")
+    .replace(near("6" + AP), "\u1E93")
+    .replace(new RegExp("(?<=\\p{L})" + AP + "|" + AP + "(?=\\p{L})", "gu"), "");
+}
+
 function wordSkeleton(word) {
+  // A pure number (size, year, model number) is kept as written, not read as Franco letters.
+  if (/^\p{N}+$/u.test(word)) return word;
   const out = [];
   const chars = [...word];
   for (let i = 0; i < chars.length; i++) {
@@ -106,9 +125,11 @@ function score(queryTokens, textTokens) {
   queryTokens.forEach((q, qi) => {
     let best = 0;
     for (const t of textTokens) {
-      let s = q === t ? 1 : Math.max(0, 1 - distance(q, t) / Math.max(q.length, t.length));
+      // Pure numbers match exactly, never fuzzily or by prefix: size 39 is not 38 or 395.
+      const bothNumbers = /^\p{N}+$/u.test(q) && /^\p{N}+$/u.test(t);
+      let s = q === t ? 1 : bothNumbers ? 0 : Math.max(0, 1 - distance(q, t) / Math.max(q.length, t.length));
       // The last query token may be a prefix (search-as-you-type).
-      if (qi === queryTokens.length - 1 && q.length >= 2 && t.startsWith(q)) s = Math.max(s, 0.9);
+      if (!bothNumbers && qi === queryTokens.length - 1 && q.length >= 2 && t.startsWith(q)) s = Math.max(s, 0.9);
       if (s > best) best = s;
     }
     total += best;
@@ -153,4 +174,3 @@ export function createIndex(items, options = {}) {
     },
   };
 }
-
